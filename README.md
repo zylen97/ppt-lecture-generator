@@ -64,12 +64,12 @@ ppt-lecture-generator/
    - 输入验证器
    - 图片处理工具
 
-## 📋 待实现功能
+## ✅ 已完成功能
 
-- [ ] GUI界面模块
-- [ ] 主程序入口
-- [ ] 单元测试
-- [ ] 部署脚本
+- [x] **GUI界面模块** - 完整的图形用户界面
+- [x] **主程序入口** - 支持命令行和GUI模式
+- [x] **单元测试** - 基础测试框架
+- [x] **部署脚本** - 自动化安装和构建
 
 ## 🔧 技术栈
 
@@ -88,8 +88,35 @@ ppt-lecture-generator/
 pip install -r requirements.txt
 ```
 
-## 🚀 使用示例
+## 🚀 快速开始
 
+### 1. 安装依赖
+```bash
+pip install -r requirements.txt
+```
+
+### 2. 启动应用
+```bash
+# 启动GUI界面（推荐）
+python start.py
+
+# 或者使用完整路径
+python src/main.py --gui
+
+# 命令行模式
+python src/main.py --cli --input your_file.pptx --api-key your_key --api-base https://api.chatanywhere.tech
+```
+
+### 3. 自动化安装
+```bash
+# 运行安装脚本
+python scripts/install.py
+
+# 构建可执行文件
+python scripts/build.py --all
+```
+
+### 4. 编程接口
 ```python
 from src.core.script_generator import ScriptGenerator
 

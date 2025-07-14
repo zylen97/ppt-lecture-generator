@@ -5,7 +5,7 @@
 
 __version__ = "1.0.0"
 __author__ = "PPT Lecture Generator Team"
-__email__ = "support@ppt-lecture-generator.com"
+__email__ = "zylenw97@gmail.com"
 
 # 包导入
 from .config import settings

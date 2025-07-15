@@ -249,6 +249,11 @@ class Settings:
         if style not in ['academic', 'casual', 'formal']:
             return False, f"不支持的风格: {style}"
         
+        # 检查目标受众设置
+        target_audience = lecture_config.get('target_audience', 'undergraduate')
+        if target_audience not in ['undergraduate', 'graduate', 'professional']:
+            return False, f"不支持的目标受众: {target_audience}"
+        
         return True, ""
     
     def validate_all(self) -> tuple[bool, list[str]]:

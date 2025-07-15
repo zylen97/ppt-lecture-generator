@@ -229,8 +229,10 @@ def run_cli_mode(args):
         generation_config = {
             'total_duration': args.duration,
             'language': args.language,
-            'include_interaction': True,
-            'include_examples': True
+            'include_interaction': False,  # 纯讲授模式
+            'include_examples': True,
+            'no_questions': True,  # 不包含提问
+            'no_blackboard': True  # 不包含板书
         }
         generator.set_generation_config(generation_config)
         

@@ -17,7 +17,10 @@
         "language": "zh-CN",
         "style": "academic",
         "include_interaction": true,
-        "include_examples": true
+        "include_examples": true,
+        "course_name": "",
+        "chapter_name": "",
+        "target_audience": "undergraduate"
     },
     "gui": {
         "theme": "default",

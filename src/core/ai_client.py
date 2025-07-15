@@ -148,7 +148,8 @@ class AIClient:
             )
     
     def generate_script(self, slide_content: str, context: str = "", 
-                       duration: int = 3) -> APIResponse:
+                       duration: int = 3, course_name: str = "", 
+                       chapter_name: str = "", target_audience: str = "undergraduate") -> APIResponse:
         """
         生成讲稿内容
         
@@ -156,13 +157,17 @@ class AIClient:
             slide_content: 幻灯片内容
             context: 前文上下文
             duration: 建议讲解时长（分钟）
+            course_name: 课程名称
+            chapter_name: 章节名称
+            target_audience: 目标受众
             
         Returns:
             APIResponse: 生成结果
         """
         try:
             # 构建讲稿生成消息
-            messages = self._build_script_messages(slide_content, context, duration)
+            messages = self._build_script_messages(slide_content, context, duration, 
+                                                  course_name, chapter_name, target_audience)
             
             # 发送请求
             return self._make_api_call(messages)
@@ -270,7 +275,8 @@ class AIClient:
         return messages
     
     def _build_script_messages(self, slide_content: str, context: str, 
-                             duration: int) -> List[Dict[str, Any]]:
+                             duration: int, course_name: str = "", 
+                             chapter_name: str = "", target_audience: str = "undergraduate") -> List[Dict[str, Any]]:
         """
         构建讲稿生成消息
         
@@ -278,6 +284,9 @@ class AIClient:
             slide_content: 幻灯片内容
             context: 上下文信息
             duration: 时长
+            course_name: 课程名称
+            chapter_name: 章节名称
+            target_audience: 目标受众
             
         Returns:
             List[Dict[str, Any]]: 消息列表
@@ -288,7 +297,10 @@ class AIClient:
         user_prompt = PROMPT_TEMPLATES['script_generation'].format(
             slide_content=slide_content,
             context=context,
-            duration=duration
+            duration=duration,
+            course_name=course_name or "未指定课程",
+            chapter_name=chapter_name or "未指定章节",
+            target_audience=target_audience
         )
         
         messages = [

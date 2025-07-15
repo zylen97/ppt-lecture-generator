@@ -11,6 +11,8 @@
 - 🎯 **智能PPT分析**: 自动提取PPT中的文本、图表、要点等内容
 - 🖼️ **视觉AI理解**: 将PPT转换为高质量图片，使用GPT-4o等视觉模型深度分析
 - 📝 **连贯讲稿生成**: 基于上下文管理生成流畅自然的教学讲稿
+- 🎤 **纯讲授模式**: 支持无互动、无提问、无板书的连续讲授风格
+- 📋 **教师友好格式**: 优化的Markdown格式，包含视觉标记和导航提示
 - ⏱️ **智能时间分配**: 根据内容复杂度和课程时长自动分配讲解时间
 - 🎨 **双模式支持**: 提供图形界面(GUI)和命令行(CLI)两种使用方式
 - 🔄 **完整转换流程**: PPT → PDF → 图片 → AI分析 → 讲稿生成
@@ -195,8 +197,10 @@ conversion_timeout = 60         # 转换超时时间
 [lecture]
 default_duration = 90           # 默认课程时长(分钟)
 language = zh-CN               # 语言设置
-include_interaction = true     # 包含互动环节
+include_interaction = false    # 纯讲授模式，不包含互动环节
 include_examples = true        # 包含示例说明
+no_questions = true           # 不包含提问
+no_blackboard = true          # 不包含板书
 time_per_slide = 2.0          # 每张幻灯片基础时间(分钟)
 ```
 
@@ -221,7 +225,16 @@ python src/main.py --cli \
   --model gpt-4-vision-preview
 ```
 
-### 示例3：批量处理
+### 示例3：纯讲授模式
+```bash
+# 生成纯讲授风格的讲稿（无互动、无提问、无板书）
+python src/main.py --cli \
+  --input presentation.pptx \
+  --output lecture_pure.md \
+  --duration 30
+```
+
+### 示例4：批量处理
 ```bash
 # 处理多个文件（需要编写简单脚本）
 for file in *.pptx; do

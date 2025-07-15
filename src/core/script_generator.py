@@ -41,10 +41,12 @@ class ScriptGenerator:
         # 生成配置
         self.generation_config = {
             'total_duration': LECTURE_GENERATION['default_duration'],
-            'include_interaction': True,
+            'include_interaction': False,  # 禁用互动
             'include_examples': True,
             'language': 'zh-CN',
-            'style': 'academic'
+            'style': 'lecture_only',  # 纯讲授模式
+            'no_questions': True,  # 不包含提问
+            'no_blackboard': True  # 不包含板书
         }
         
         # 进度回调
@@ -286,7 +288,14 @@ class ScriptGenerator:
                 slide_content = self._build_slide_content_for_generation(slide_info, suggestions)
                 
                 # 生成讲稿
-                response = self.ai_client.generate_script(slide_content, context, duration)
+                response = self.ai_client.generate_script(
+                    slide_content, 
+                    context, 
+                    duration,
+                    course_name=self.generation_config.get('course_name', ''),
+                    chapter_name=self.generation_config.get('chapter_name', ''),
+                    target_audience=self.generation_config.get('target_audience', 'undergraduate')
+                )
                 
                 if not response.success:
                     self.logger.error(f"生成讲稿{slide_info.slide_number}失败: {response.error_message}")
@@ -360,12 +369,9 @@ class ScriptGenerator:
         if slide_info.table_count > 0:
             content_parts.append(f"包含{slide_info.table_count}个表格")
         
-        # 教学建议
-        if suggestions['interaction_needed']:
-            content_parts.append("\\n需要安排互动环节")
-        
+        # 教学建议 (仅保留例子相关)
         if suggestions['example_needed']:
-            content_parts.append("需要提供具体例子")
+            content_parts.append("\\n需要提供具体例子")
         
         if suggestions['connection_points']:
             content_parts.append("\\n关联点:")
@@ -387,81 +393,47 @@ class ScriptGenerator:
         """
         script_parts = []
         
-        # 添加标题和概览
+        # 获取课程信息
         course_info = self.context_manager.get_course_summary()
+        course_name = self.generation_config.get('course_name', course_info['course_info']['course_title'])
+        chapter_name = self.generation_config.get('chapter_name', '')
         
-        script_parts.append(f"# {course_info['course_info']['course_title']} - 课程讲稿")
-        script_parts.append("")
-        script_parts.append(f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        script_parts.append(f"**课程时长**: {course_info['course_info']['total_duration']}分钟")
-        script_parts.append(f"**幻灯片数量**: {course_info['course_info']['total_slides']}张")
-        script_parts.append(f"**涉及概念**: {course_info['total_concepts']}个")
+        # 课程封面页 - 简洁明了
+        script_parts.append(f"# {course_name}")
+        if chapter_name:
+            script_parts.append(f"## {chapter_name}")
         script_parts.append("")
         script_parts.append("---")
         script_parts.append("")
         
-        # 添加课程大纲
-        script_parts.append("## 📋 课程大纲")
+        # 课程内容目录 - 便于快速定位
+        script_parts.append("## 📋 内容导航")
         script_parts.append("")
-        
-        cumulative_time = 0
-        for script_data in self.generated_scripts:
+        for i, script_data in enumerate(self.generated_scripts):
             slide_num = script_data['slide_number']
             title = script_data['title']
-            duration = script_data['duration']
-            
-            script_parts.append(f"{slide_num}. **{title}** ({duration}分钟) - {cumulative_time}~{cumulative_time + duration}分钟")
-            cumulative_time += duration
-        
+            script_parts.append(f"{i+1}. **{title}** - [第{slide_num}张幻灯片](#第{slide_num}张---{title.replace(' ', '-').replace('？', '').replace('?', '')})")
         script_parts.append("")
         script_parts.append("---")
         script_parts.append("")
         
-        # 添加详细讲稿
-        script_parts.append("## 📖 详细讲稿")
-        script_parts.append("")
-        
+        # 详细讲稿内容
         for script_data in self.generated_scripts:
             slide_num = script_data['slide_number']
             title = script_data['title']
-            duration = script_data['duration']
             content = script_data['content']
             
-            script_parts.append(f"### 第{slide_num}张 - {title}")
-            script_parts.append(f"**建议时长**: {duration}分钟")
+            # 标题区域 - 大号清晰
+            script_parts.append(f"## 第{slide_num}张 - {title}")
             script_parts.append("")
-            script_parts.append(content)
+            
+            # 格式化讲稿内容，提升可读性
+            formatted_content = self._format_lecture_content(content)
+            script_parts.append(formatted_content)
             script_parts.append("")
             script_parts.append("---")
             script_parts.append("")
         
-        # 添加教学建议
-        script_parts.append("## 💡 教学建议")
-        script_parts.append("")
-        script_parts.append("### 课前准备")
-        script_parts.append("- 提前15分钟到达教室，检查设备")
-        script_parts.append("- 准备好相关案例和补充材料")
-        script_parts.append("- 熟悉讲稿内容，预演关键部分")
-        script_parts.append("")
-        script_parts.append("### 课堂管理")
-        script_parts.append("- 注意观察学生反应，适时调整节奏")
-        script_parts.append("- 鼓励学生提问和参与讨论")
-        script_parts.append("- 合理分配时间，预留答疑时间")
-        script_parts.append("")
-        script_parts.append("### 课后跟进")
-        script_parts.append("- 收集学生反馈，改进教学内容")
-        script_parts.append("- 布置相关作业或阅读材料")
-        script_parts.append("- 预告下节课内容")
-        script_parts.append("")
-        
-        # 添加统计信息
-        if self.generation_stats:
-            script_parts.append("## 📊 生成统计")
-            script_parts.append("")
-            script_parts.append(f"- 总耗时: {self.generation_stats['total_time']:.1f}秒")
-            script_parts.append(f"- 处理幻灯片: {self.generation_stats['total_slides']}张")
-            script_parts.append(f"- 讲稿长度: {self.generation_stats['total_length']:,}字符")
-            script_parts.append(f"- 生成时间: {self.generation_stats['generation_time']}")
         
         return "\\n".join(script_parts)
     
@@ -486,6 +458,143 @@ class ScriptGenerator:
                 content_parts.append(f"{indent}- {point['text']}")
         
         return "\\n".join(content_parts)
+    
+    def _format_lecture_content(self, content: str) -> str:
+        """
+        格式化讲稿内容，增加教师上课友好的可读性元素
+        
+        Args:
+            content: 原始讲稿内容
+            
+        Returns:
+            str: 格式化后的内容
+        """
+        lines = content.split('\\n')
+        formatted_lines = []
+        
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            # 空行保持
+            if not line:
+                formatted_lines.append("")
+                i += 1
+                continue
+            
+            # 检测并格式化不同类型的内容
+            if self._is_section_header(line):
+                # 章节标题 - 使用大号标题和图标
+                formatted_lines.append(f"### 🎯 {line}")
+                formatted_lines.append("")
+                
+            elif self._is_time_marker(line):
+                # 时间标记 - 醒目的时间提示
+                formatted_lines.append(f"> ⏰ **{line}**")
+                formatted_lines.append("")
+                
+            elif self._is_interaction_cue(line):
+                # 互动提示 - 特殊标记
+                formatted_lines.append(f"💬 **互动环节**: {line}")
+                formatted_lines.append("")
+                
+            elif self._is_key_point(line):
+                # 关键要点 - 突出显示
+                formatted_lines.append(f"⭐ **重点**: {line}")
+                formatted_lines.append("")
+                
+            elif self._is_example_content(line):
+                # 例子内容 - 代码块样式
+                formatted_lines.append(f"📝 **举例说明**:")
+                formatted_lines.append(f"```")
+                formatted_lines.append(line)
+                formatted_lines.append(f"```")
+                formatted_lines.append("")
+                
+            elif self._is_question(line):
+                # 问题 - 醒目标记
+                formatted_lines.append(f"❓ **提问**: {line}")
+                formatted_lines.append("")
+                
+            elif self._is_transition(line):
+                # 过渡语句 - 浅色标记
+                formatted_lines.append(f"↪️ *{line}*")
+                formatted_lines.append("")
+                
+            elif self._is_summary_point(line):
+                # 总结要点 - 列表格式
+                formatted_lines.append(f"✅ {line}")
+                
+            elif line.startswith('-') or line.startswith('•'):
+                # 普通列表项 - 保持原格式但添加间距
+                formatted_lines.append(f"  • {line.lstrip('- •')}")
+                
+            else:
+                # 普通段落 - 添加适当的段落间距
+                formatted_lines.append(line)
+                # 检查下一行，如果不是空行且是新段落，添加空行
+                if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].startswith(' '):
+                    formatted_lines.append("")
+            
+            i += 1
+        
+        # 添加教师提示框
+        formatted_content = "\\n".join(formatted_lines)
+        
+        # 在开头添加快速导航
+        formatted_content = self._add_teacher_navigation(formatted_content)
+        
+        return formatted_content
+    
+    def _is_section_header(self, line: str) -> bool:
+        """判断是否为章节标题"""
+        headers = ['导入', '新课', '讲解', '练习', '小结', '总结', '回顾', '引入', '概述']
+        return any(header in line for header in headers)
+    
+    def _is_time_marker(self, line: str) -> bool:
+        """判断是否为时间标记"""
+        return '分钟' in line or '时间' in line or '⏰' in line
+    
+    def _is_interaction_cue(self, line: str) -> bool:
+        """判断是否为互动提示 - 已禁用"""
+        return False  # 不使用互动环节
+    
+    def _is_key_point(self, line: str) -> bool:
+        """判断是否为关键要点"""
+        markers = ['重点', '关键', '核心', '重要', '注意', '强调']
+        return any(marker in line for marker in markers)
+    
+    def _is_example_content(self, line: str) -> bool:
+        """判断是否为例子内容"""
+        markers = ['例如', '举例', '比如', '案例', '实例', '例子']
+        return any(marker in line for marker in markers)
+    
+    def _is_question(self, line: str) -> bool:
+        """判断是否为问题 - 已禁用"""
+        return False  # 不使用提问环节
+    
+    def _is_transition(self, line: str) -> bool:
+        """判断是否为过渡语句"""
+        transitions = ['接下来', '然后', '下面', '现在', '最后', '首先', '其次', '另外', '此外']
+        return any(trans in line for trans in transitions)
+    
+    def _is_summary_point(self, line: str) -> bool:
+        """判断是否为总结要点"""
+        return line.startswith('1.') or line.startswith('2.') or line.startswith('3.') or '总结' in line
+    
+    def _add_teacher_navigation(self, content: str) -> str:
+        """添加教师导航提示"""
+        navigation = """
+> 🎓 **教师提示**
+> - 📖 **准备**: 提前预览本节内容，准备相关材料
+> - ⏱️ **时间**: 注意把控各环节时间，确保教学节奏
+> - 💡 **重点**: 关注⭐标记的重点内容
+> - 📢 **讲解**: 纯讲授模式，连贯流畅地进行知识传授
+
+---
+
+"""
+        return navigation + content
     
     def _get_default_output_path(self, ppt_path: str) -> str:
         """

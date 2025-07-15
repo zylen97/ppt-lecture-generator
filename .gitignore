@@ -1,4 +1,4 @@
-# Python
+# Python缓存文件
 __pycache__/
 *.py[cod]
 *$py.class
@@ -16,39 +16,59 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual Environment
+# 虚拟环境
+.env
+.venv
+env/
 venv/
 ENV/
-env/
+env.bak/
+venv.bak/
 
-# IDE
-.idea/
+# IDE和编辑器
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
+
+# 系统文件
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Project specific
-temp/
+# 日志文件
+*.log
 logs/*.log
-output/
-*.pdf
-*.png
-*.jpg
-*.jpeg
-config/config.ini
 
-# Test coverage
-htmlcov/
-.coverage
-.coverage.*
-.cache
-.pytest_cache/
+# 临时文件
+temp/
+tmp/
+*.tmp
+*.temp
 
-# Documentation
-docs/_build/
+# 测试生成的文件
+output/test_*.md
+output/*_test.md
+test_format*.py
+
+# 配置文件中的敏感信息（保留示例）
+# config/config.ini
+
+# 覆盖文件
+*.orig
+
+# 备份文件
+*.bak
+*.backup

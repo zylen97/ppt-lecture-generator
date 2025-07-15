@@ -56,7 +56,7 @@ class AIClient:
         })
         
         # 重试配置
-        self.max_retries = AI_ANALYSIS['retry_delay']
+        self.max_retries = 3  # 最大重试次数
         self.retry_delay = AI_ANALYSIS['retry_delay']
         self.timeout = AI_ANALYSIS['timeout']
         
@@ -138,7 +138,9 @@ class AIClient:
             return self._make_api_call(messages)
             
         except Exception as e:
+            import traceback
             self.logger.error(f"分析幻灯片图片失败: {e}")
+            self.logger.error(f"错误堆栈: {traceback.format_exc()}")
             return APIResponse(
                 success=False,
                 content="",
@@ -166,7 +168,9 @@ class AIClient:
             return self._make_api_call(messages)
             
         except Exception as e:
+            import traceback
             self.logger.error(f"生成讲稿失败: {e}")
+            self.logger.error(f"错误堆栈: {traceback.format_exc()}")
             return APIResponse(
                 success=False,
                 content="",

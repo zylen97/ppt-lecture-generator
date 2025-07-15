@@ -1,216 +1,169 @@
-# PPT讲稿生成器
+# PPT讲稿生成器 (PPT Lecture Script Generator)
 
-一个基于AI的PPT讲稿自动生成工具，支持图片内容分析和连贯讲稿生成。
+一个基于AI的PPT讲稿自动生成工具，使用视觉AI模型分析PPT内容并生成高质量的教学讲稿。
 
-## 🌟 项目特色
+## ✨ 功能特点
 
-- 📊 **智能PPT分析** - 提取文本内容并转换为高质量图片
-- 🤖 **AI视觉理解** - 使用GPT-4 Vision等模型分析图片内容
-- 📝 **连贯讲稿生成** - 基于上下文管理生成流畅的教学讲稿
-- 🎨 **GUI友好界面** - 简单易用的图形界面
-- ⚙️ **灵活配置** - 支持自定义API端点和参数
-- 🔧 **模块化设计** - 工程化的代码结构，易于扩展
+- 🎯 **智能PPT分析**: 自动提取PPT中的文本、标题、要点等内容
+- 🖼️ **视觉AI理解**: 将PPT转换为高质量图片，使用GPT-4等视觉模型深度分析
+- 📝 **连贯讲稿生成**: 基于上下文管理生成流畅自然的教学讲稿
+- ⏱️ **智能时间分配**: 根据内容复杂度自动分配每页的讲解时间
+- 🎨 **双模式支持**: 提供图形界面(GUI)和命令行(CLI)两种使用方式
+- 🔄 **多格式转换**: PPT → PDF → 图片的完整转换流程
 
-## 🏗️ 项目架构
+## 🚀 快速开始
+
+### 系统要求
+
+- Python 3.8+
+- LibreOffice (用于PPT转PDF)
+- poppler-utils (用于PDF转图片)
+
+### 安装依赖
+
+1. 安装系统依赖:
+```bash
+# macOS
+brew install --cask libreoffice
+brew install poppler
+
+# Ubuntu/Debian
+sudo apt update
+sudo apt install libreoffice poppler-utils
+
+# Windows
+# 请手动安装LibreOffice和poppler
+```
+
+2. 安装Python依赖:
+```bash
+pip install -r requirements.txt
+```
+
+### 配置API
+
+编辑 `config/config.ini` 文件，添加你的API配置：
+```ini
+[api]
+endpoint = https://api.openai.com/v1
+api_key = your-api-key-here
+model = gpt-4o
+```
+
+## 📖 使用方法
+
+### GUI模式
+```bash
+python src/main.py --gui
+```
+
+### 命令行模式
+```bash
+# 基本使用
+python src/main.py --cli --input presentation.pptx --output lecture.md
+
+# 指定课程时长
+python src/main.py --cli --input presentation.pptx --duration 120
+
+# 使用自定义API配置
+python src/main.py --cli --input presentation.pptx --api-key sk-xxx --api-base https://api.example.com
+```
+
+### 命令行参数说明
+- `--input, -i`: 输入PPT文件路径
+- `--output, -o`: 输出讲稿文件路径
+- `--api-key, -k`: API密钥
+- `--api-base, -b`: API基础URL
+- `--model, -m`: 使用的AI模型
+- `--duration, -d`: 课程时长（分钟，默认90）
+- `--language, -l`: 语言设置（默认zh-CN）
+- `--verbose, -v`: 显示详细日志
+
+## 🏗️ 项目结构
 
 ```
 ppt-lecture-generator/
 ├── src/                    # 源代码
-│   ├── config/            # 配置管理
-│   ├── core/              # 核心业务逻辑
+│   ├── core/              # 核心功能模块
+│   │   ├── ai_client.py   # AI客户端
+│   │   ├── ppt_processor.py # PPT处理器
+│   │   ├── script_generator.py # 讲稿生成器
+│   │   └── context_manager.py # 上下文管理
 │   ├── gui/               # GUI界面
-│   └── utils/             # 工具函数
-├── tests/                 # 单元测试
-├── docs/                  # 文档
-└── resources/             # 资源文件
+│   │   ├── main_window.py # 主窗口
+│   │   └── components/    # UI组件
+│   ├── utils/             # 工具模块
+│   │   ├── ppt_converter.py # PPT转换器
+│   │   ├── image_utils.py # 图片处理
+│   │   └── validators.py  # 验证器
+│   └── config/            # 配置管理
+├── config/                # 配置文件
+├── examples/              # 示例文件
+├── tests/                 # 测试代码
+└── requirements.txt       # 依赖列表
 ```
 
-## 🚀 已实现功能
+## 🔧 高级配置
 
-### ✅ 核心模块
+### 配置文件说明
 
-1. **配置管理模块** (`src/config/`)
-   - 设置文件读写和验证
-   - 支持多种配置格式
-   - 自动备份和恢复
+`config/config.ini` 包含以下配置项：
 
-2. **PPT处理模块** (`src/core/ppt_processor.py`)
-   - 支持PPTX文件读取和解析
-   - 文本内容提取
-   - 图片转换（Spire.Presentation + pdf2image）
-   - 多媒体元素统计
+```ini
+[api]
+endpoint = API端点URL
+api_key = API密钥
+model = 模型名称
+timeout = 超时时间(秒)
+max_retries = 最大重试次数
 
-3. **AI API调用模块** (`src/core/ai_client.py`)
-   - 支持OpenAI API和自定义端点
-   - 图片编码和视觉分析
-   - 错误处理和重试机制
-   - 异步调用支持
+[ppt]
+output_format = 图片格式(png/jpg)
+dpi = 图片DPI(默认300)
+quality = 图片质量(1-100)
 
-4. **上下文管理模块** (`src/core/context_manager.py`)
-   - 跟踪讲稿生成上下文
-   - 概念关系管理
-   - 教学进度控制
-   - 互动点和示例点计算
-
-5. **讲稿生成模块** (`src/core/script_generator.py`)
-   - 整合所有模块功能
-   - 批量处理和进度报告
-   - 结构化讲稿输出
-   - 统计信息收集
-
-6. **工具函数模块** (`src/utils/`)
-   - 日志系统（多级别、文件轮转）
-   - 文件操作工具
-   - 输入验证器
-   - 图片处理工具
-
-## ✅ 已完成功能
-
-- [x] **GUI界面模块** - 完整的图形用户界面
-- [x] **主程序入口** - 支持命令行和GUI模式
-- [x] **单元测试** - 基础测试框架
-- [x] **部署脚本** - 自动化安装和构建
-
-## 🔧 技术栈
-
-- **核心语言**: Python 3.8+
-- **GUI框架**: Tkinter
-- **AI API**: OpenAI GPT-4 Vision
-- **PPT处理**: python-pptx, spire.presentation
-- **图片处理**: Pillow, pdf2image
-- **HTTP客户端**: requests, aiohttp
-- **日志系统**: logging, loguru
-- **测试框架**: pytest
-
-## 📦 安装依赖
-
-```bash
-pip install -r requirements.txt
+[lecture]
+default_duration = 默认课程时长(分钟)
+language = 语言设置
+style = 讲稿风格
+include_interaction = 是否包含互动环节
+include_examples = 是否包含示例
 ```
 
-## 🚀 快速开始
+## 🐛 常见问题
 
-### 1. 安装依赖
-```bash
-pip install -r requirements.txt
-```
+### Q: PPT转换失败怎么办？
+A: 请确保已安装LibreOffice，并且`soffice`命令可用。可以运行`which soffice`检查。
 
-### 2. 启动应用
-```bash
-# 启动GUI界面（推荐）
-python start.py
+### Q: 图片生成失败？
+A: 请确保已安装poppler-utils。在macOS上运行`brew install poppler`安装。
 
-# 或者使用完整路径
-python src/main.py --gui
+### Q: API调用失败？
+A: 请检查API密钥是否正确，以及网络连接是否正常。
 
-# 命令行模式
-python src/main.py --cli --input your_file.pptx --api-key your_key --api-base https://api.chatanywhere.tech
-```
-
-### 3. 自动化安装
-```bash
-# 运行安装脚本
-python scripts/install.py
-
-# 构建可执行文件
-python scripts/build.py --all
-```
-
-### 4. 编程接口
-```python
-from src.core.script_generator import ScriptGenerator
-
-# 初始化生成器
-generator = ScriptGenerator(
-    api_key="your-api-key",
-    api_base="https://api.chatanywhere.tech",
-    model="gpt-4-vision-preview"
-)
-
-# 生成讲稿
-success, result = generator.generate_from_ppt("presentation.pptx")
-if success:
-    print(f"讲稿已生成: {result}")
-else:
-    print(f"生成失败: {result}")
-```
-
-## 📊 功能特性
-
-### 智能分析
-- 自动识别幻灯片类型（标题页、章节页、内容页、总结页）
-- 提取文本内容和多媒体元素统计
-- AI视觉分析图片、图表和复杂布局
-
-### 连贯生成
-- 基于上下文的前向引用
-- 概念关系追踪
-- 教学进度管理
-- 自动时间分配
-
-### 专业输出
-- 结构化的Markdown格式
-- 教学建议和互动设计
-- 课程大纲和时间安排
-- 完整的统计信息
-
-### 灵活配置
-- 支持多种API端点
-- 可自定义生成参数
-- 配置文件管理
-- 错误处理和重试
-
-## 🎯 设计原则
-
-1. **模块化设计** - 每个模块职责单一，接口清晰
-2. **可扩展性** - 支持新的PPT处理库和AI模型
-3. **健壮性** - 完善的错误处理和日志记录
-4. **易用性** - 简单的API和友好的用户界面
-5. **性能优化** - 异步处理和批量操作
-
-## 🔍 代码质量
-
-- 类型注解和文档字符串
-- 统一的错误处理机制
-- 完善的日志记录
-- 配置验证和安全检查
-- 资源管理和清理
-
-## 📈 性能特性
-
-- 支持大型PPT文件处理
-- 批量幻灯片分析
-- 智能重试和错误恢复
-- 内存优化和缓存机制
-- 异步API调用
-
-## 🛡️ 安全考虑
-
-- API密钥安全存储
-- 输入验证和过滤
-- 文件路径安全检查
-- 临时文件清理
-- 错误信息脱敏
-
-## 📝 开发状态
-
-当前版本：**v1.0.0-alpha**
-
-核心功能已完成，可以进行基本的PPT讲稿生成。GUI界面和完整的用户体验正在开发中。
+### Q: 中文显示有问题？
+A: 确保系统安装了中文字体，特别是在Linux系统上。
 
 ## 🤝 贡献指南
 
-1. Fork 项目
-2. 创建功能分支
-3. 提交代码
-4. 创建Pull Request
+欢迎提交Issue和Pull Request！
+
+1. Fork本项目
+2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交你的修改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启一个Pull Request
 
 ## 📄 许可证
 
-MIT License - 详见 LICENSE 文件
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 🙏 致谢
+
+- 感谢OpenAI提供强大的AI模型
+- 感谢LibreOffice项目提供PPT转换功能
+- 感谢所有贡献者的支持
 
 ---
 
-**开发团队**: PPT Lecture Generator Team  
-**技术支持**: support@ppt-lecture-generator.com  
-**项目地址**: https://github.com/your-username/ppt-lecture-generator
+如有问题或建议，请提交Issue或联系作者。

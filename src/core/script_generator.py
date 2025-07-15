@@ -186,7 +186,7 @@ class ScriptGenerator:
             
             for i, slide_info in enumerate(slides_info):
                 self._report_progress(
-                    30 + (i * 30) // total_slides,
+                    30 + int((i * 30) / total_slides),
                     100,
                     f"正在分析第{slide_info.slide_number}张幻灯片..."
                 )
@@ -268,7 +268,7 @@ class ScriptGenerator:
             
             for i, slide_info in enumerate(slides_info):
                 self._report_progress(
-                    60 + (i * 25) // total_slides,
+                    60 + int((i * 25) / total_slides),
                     100,
                     f"正在生成第{slide_info.slide_number}张幻灯片讲稿..."
                 )

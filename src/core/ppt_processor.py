@@ -34,6 +34,7 @@ except ImportError:
 from ..utils.file_utils import FileUtils
 from ..utils.logger import get_logger
 from ..config.constants import PPT_PROCESSING
+from ..utils.ppt_converter import PPTConverter
 
 
 @dataclass
@@ -215,11 +216,31 @@ class PPTProcessor:
         Returns:
             bool: 是否成功
         """
-        # 优先使用Spire.Presentation
+        # 优先使用新的PPT转换器
+        try:
+            converter = PPTConverter(self.logger)
+            image_paths = converter.convert_ppt_to_images(
+                str(self.ppt_path), 
+                self.temp_dir,
+                dpi=PPT_PROCESSING.get('dpi', 300)
+            )
+            
+            if image_paths:
+                # 将图片路径关联到幻灯片信息
+                for i, image_path in enumerate(image_paths):
+                    if i < len(self.slides_info):
+                        self.slides_info[i].image_path = image_path
+                return True
+            else:
+                self.logger.warning("PPT转换器未生成任何图片")
+        except Exception as e:
+            self.logger.error(f"使用PPT转换器失败: {e}")
+        
+        # 备选方案1：使用Spire.Presentation
         if SPIRE_AVAILABLE:
             return self._convert_with_spire()
         
-        # 备选方案：通过PDF转换
+        # 备选方案2：通过PDF转换
         if PDF_AVAILABLE:
             return self._convert_via_pdf()
         
@@ -237,11 +258,18 @@ class PPTProcessor:
             presentation = SpirePresentation()
             presentation.LoadFromFile(str(self.ppt_path))
             
+            # 设置高质量转换参数
+            presentation.SlideSize.Type = presentation.SlideSize.Type
+            
             for i, slide_info in enumerate(self.slides_info):
                 image_path = os.path.join(self.temp_dir, f"slide_{i+1:03d}.png")
                 
-                # 转换为图片
-                image = presentation.Slides[i].SaveAsImage()
+                # 使用高分辨率转换为图片
+                # 设置缩放因子以提高图片质量（2x = 200% 大小）
+                scale_factor = 2
+                image = presentation.Slides[i].SaveAsImage(scale_factor, scale_factor)
+                
+                # 保存为高质量PNG
                 image.Save(image_path, ImageFormat.get_Png())
                 
                 slide_info.image_path = image_path
@@ -285,13 +313,26 @@ class PPTProcessor:
             
             # 从PDF转换为图片
             if os.path.exists(pdf_path):
-                images = convert_from_path(pdf_path, dpi=300)
+                # 使用高DPI以获得更好的图片质量
+                images = convert_from_path(
+                    pdf_path, 
+                    dpi=PPT_PROCESSING.get('dpi', 300),  # 使用配置的DPI，默认300
+                    fmt='png',
+                    thread_count=4  # 多线程加速转换
+                )
                 
                 for i, image in enumerate(images):
                     if i < len(self.slides_info):
                         image_path = os.path.join(self.temp_dir, f"slide_{i+1:03d}.png")
-                        image.save(image_path, 'PNG')
+                        # 保存高质量PNG
+                        image.save(
+                            image_path, 
+                            'PNG', 
+                            quality=PPT_PROCESSING.get('image_quality', 95),
+                            optimize=True
+                        )
                         self.slides_info[i].image_path = image_path
+                        self.logger.debug(f"生成图片 {i+1}/{len(images)}: {image_path}")
                 
                 return True
             

@@ -436,7 +436,7 @@ class ContextManager:
         if remaining_slides <= 0:
             return {'suggested_time': 0, 'remaining_time': remaining_time}
         
-        average_time = remaining_time // remaining_slides
+        average_time = int(remaining_time / remaining_slides)
         
         return {
             'suggested_time': max(2, min(8, average_time)),
@@ -517,7 +517,7 @@ class ContextManager:
             return 0.0
         
         total_duration = sum(ctx.duration for ctx in self.slide_contexts)
-        return total_duration / len(self.slide_contexts)
+        return int(total_duration / len(self.slide_contexts)) if len(self.slide_contexts) > 0 else 0
     
     def clear_context(self):
         """清理上下文"""

@@ -19,16 +19,11 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Virtual environments
-.env
-.venv
-env/
+# Virtual Environment
 venv/
 ENV/
-env.bak/
-venv.bak/
+env/
 
 # IDE
 .idea/
@@ -36,57 +31,24 @@ venv.bak/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Project specific
 temp/
-logs/
-*.log
-config.ini
-*.pptx
-*.ppt
+logs/*.log
+output/
+*.pdf
 *.png
 *.jpg
 *.jpeg
-*.gif
-*.bmp
-*.pdf
+config/config.ini
 
-# API keys and secrets
-.env
-.env.local
-.env.production
-secrets.json
-api_keys.txt
-
-# Test files
-test_*.py
-*_test.py
-test_data/
-test_output/
-
-# Documentation builds
-docs/_build/
-docs/build/
-
-# Coverage reports
+# Test coverage
 htmlcov/
 .coverage
 .coverage.*
-coverage.xml
-*.cover
-.hypothesis/
+.cache
 .pytest_cache/
 
-# Backup files
-*.backup
-*.bak
-*.tmp
+# Documentation
+docs/_build/

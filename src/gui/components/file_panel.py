@@ -170,7 +170,7 @@ class FilePanel:
         filename = filedialog.askopenfilename(
             title="选择PPT文件",
             filetypes=[
-                ("PowerPoint文件", "*.ppt;*.pptx"),
+                ("PowerPoint文件", "*.ppt *.pptx"),
                 ("PPT文件", "*.ppt"),
                 ("PPTX文件", "*.pptx"),
                 ("所有文件", "*.*")

@@ -27,35 +27,83 @@
 - **LibreOffice**: 用于PPT转PDF转换
 - **系统依赖**: 图片处理库
 
-### 安装步骤
+### 📦 安装步骤
 
-1. **克隆项目**
+#### 第1步：克隆项目
 ```bash
 git clone https://github.com/zylen97/ppt-lecture-generator.git
 cd ppt-lecture-generator
 ```
 
-2. **安装系统依赖**
+#### 第2步：安装系统依赖
+
+<details>
+<summary><strong>🍎 macOS 用户</strong></summary>
+
 ```bash
-# macOS
+# 安装Homebrew (如果还没有)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 安装LibreOffice和Poppler
 brew install --cask libreoffice
 brew install poppler
 
-# Ubuntu/Debian
-sudo apt update
-sudo apt install libreoffice poppler-utils
-
-# Windows (手动安装)
-# 下载并安装 LibreOffice: https://www.libreoffice.org/download/
-# 下载并安装 poppler: https://poppler.freedesktop.org/
+# 验证安装
+which soffice && echo "✅ LibreOffice安装成功"
+which pdftoppm && echo "✅ Poppler安装成功"
 ```
+</details>
 
-3. **安装Python依赖**
+<details>
+<summary><strong>🐧 Ubuntu/Debian 用户</strong></summary>
+
 ```bash
+# 更新包管理器
+sudo apt update
+
+# 安装依赖
+sudo apt install -y libreoffice poppler-utils
+
+# 验证安装
+which soffice && echo "✅ LibreOffice安装成功"
+which pdftoppm && echo "✅ Poppler安装成功"
+```
+</details>
+
+<details>
+<summary><strong>🪟 Windows 用户</strong></summary>
+
+1. **下载并安装LibreOffice**：
+   - 访问 https://www.libreoffice.org/download/
+   - 下载并安装最新版本
+
+2. **安装Poppler**：
+   - 下载 poppler for Windows: https://poppler.freedesktop.org/
+   - 解压到 `C:\poppler` 
+   - 将 `C:\poppler\bin` 添加到系统PATH
+
+3. **验证安装**：
+   ```cmd
+   soffice --version
+   pdftoppm -v
+   ```
+</details>
+
+#### 第3步：安装Python依赖
+```bash
+# 安装Python依赖
 pip install -r requirements.txt
+
+# 运行环境测试
+python tests/test_cli.py
 ```
 
-4. **配置API密钥**
+如果测试全部通过，你会看到：
+```
+🎉 所有测试通过！系统可以正常使用
+```
+
+#### 第4步：配置API密钥
 
 编辑 `config/config.ini` 文件：
 ```ini
@@ -67,16 +115,9 @@ timeout = 30
 max_retries = 3
 ```
 
-### 快速测试
-
-运行基础功能测试：
-```bash
-# 测试系统环境和依赖
-python tests/test_cli.py
-
-# 测试GUI界面（可选）
-python tests/test_gui.py
-```
+> 💡 **获取API密钥**：
+> - OpenAI官方: https://platform.openai.com/api-keys
+> - 中转服务: https://api.chatanywhere.tech/ (推荐国内用户)
 
 ## 📖 使用方法
 
@@ -276,49 +317,125 @@ black src/ tests/
 flake8 src/ tests/
 ```
 
-## 🐛 故障排除
+## 🔍 处理过程说明
 
-### 常见问题
+当你运行程序时，会看到类似的输出：
 
-**Q: PPT转换失败，提示找不到LibreOffice？**
-```bash
-# 检查LibreOffice安装
-which soffice || which libreoffice
+```
+✅ PPT转换成功 (11张幻灯片)
+🔍 正在分析幻灯片内容...
+📝 正在生成讲稿...
+✅ 讲稿生成成功: output/lecture.md
 
-# macOS重新安装
-brew reinstall --cask libreoffice
-
-# 手动指定路径（如果需要）
-export PATH="/Applications/LibreOffice.app/Contents/MacOS:$PATH"
+📊 生成统计:
+  处理时间: 154.5秒
+  处理幻灯片: 11张
+  讲稿长度: 8,771字符
 ```
 
-**Q: 图片转换失败？**
+**处理流程**：
+1. **PPT → PDF**: 使用LibreOffice转换
+2. **PDF → 图片**: 使用PyMuPDF转换为高质量图片
+3. **AI分析**: GPT-4o分析每张幻灯片内容
+4. **讲稿生成**: 基于分析结果生成连贯讲稿
+5. **格式化输出**: 生成优化的Markdown格式讲稿
+
+## 📁 输出文件说明
+
+生成的讲稿文件包含：
+
+```markdown
+# 课程名称
+
+## 📋 内容导航
+(自动生成的幻灯片导航链接)
+
+## 第1张 - 标题
+
+> 🎓 **教师提示**
+> - 📖 **准备**: 提前预览本节内容，准备相关材料
+> - ⏱️ **时间**: 注意把控各环节时间，确保教学节奏
+> - 💡 **重点**: 关注⭐标记的重点内容
+> - 📢 **讲解**: 纯讲授模式，连贯流畅地进行知识传授
+
+### 🎯 开场引入：
+(详细的讲解内容，包含视觉标记)
+
+⭐ **重点**: 重要知识点
+📝 **举例说明**: 案例内容
+↪️ *过渡语句*
+✅ 总结要点
+```
+
+## 🐛 故障排除
+
+### 常见问题快速解决
+
+**Q1: 提示"找不到soffice命令"**
+```bash
+# 检查LibreOffice安装
+which soffice
+
+# 如果没有输出，重新安装LibreOffice
+# macOS: brew reinstall --cask libreoffice
+# Ubuntu: sudo apt reinstall libreoffice
+```
+
+**Q2: API调用失败**
+```bash
+# 测试网络连接
+curl -X GET "https://api.chatanywhere.tech/v1/models" \
+  -H "Authorization: Bearer your-api-key"
+
+# 检查API密钥格式
+# 正确格式: sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Q3: 图片转换失败**
 ```bash
 # 检查依赖
-python -c "import fitz; print('PyMuPDF OK')"
-python -c "from PIL import Image; print('Pillow OK')"
+python -c "import fitz; print('✅ PyMuPDF正常')"
+python -c "from PIL import Image; print('✅ Pillow正常')"
 
-# 重新安装依赖
+# 如果报错，重新安装
 pip install --upgrade pymupdf pillow
 ```
 
-**Q: API调用超时或失败？**
-- 检查网络连接和API密钥
-- 确认API端点是否正确
-- 查看 `logs/error.log` 了解详细错误信息
+**Q4: 生成的讲稿质量不佳**
+- ✅ 确保PPT内容清晰，文字可读
+- ✅ 避免过度复杂的图表和动画
+- ✅ 尝试使用更强大的模型（gpt-4o）
+- ✅ 调整课程时长参数
 
-**Q: 生成的讲稿内容质量不佳？**
-- 确保PPT内容清晰，避免过于复杂的图表
-- 尝试调整课程时长参数
-- 使用更强大的AI模型（如GPT-4o）
-
-### 日志查看
+### 查看日志
 ```bash
 # 查看应用日志
 tail -f logs/app.log
 
 # 查看错误日志
 tail -f logs/error.log
+```
+
+## 🚀 进阶技巧
+
+### 配置文件优化
+```ini
+[lecture]
+default_duration = 90           # 调整默认时长
+include_interaction = false     # 纯讲授模式，无互动环节
+include_examples = true         # 包含案例说明
+no_questions = true            # 不包含提问
+no_blackboard = true           # 不包含板书
+time_per_slide = 2.5           # 每张幻灯片基础时间
+```
+
+### 命令行别名设置
+```bash
+# 添加到 ~/.bashrc 或 ~/.zshrc
+alias ppt-gen='python /path/to/ppt-lecture-generator/src/main.py'
+
+# 使用
+ppt-gen --cli --input lecture.pptx --duration 60
 ```
 
 ## 🤝 贡献指南
@@ -368,6 +485,7 @@ tail -f logs/error.log
 - 📧 **问题反馈**: [提交Issue](https://github.com/zylen97/ppt-lecture-generator/issues)
 - 💬 **功能建议**: [讨论区](https://github.com/zylen97/ppt-lecture-generator/discussions)
 - 📖 **文档**: [Wiki](https://github.com/zylen97/ppt-lecture-generator/wiki)
+- ✉️ **开发者邮箱**: zylenw97@gmail.com
 
 ---
 

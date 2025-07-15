@@ -16,7 +16,7 @@
         "default_duration": 90,
         "language": "zh-CN",
         "style": "academic",
-        "include_interaction": true,
+        "include_interaction": false,
         "include_examples": true,
         "course_name": "",
         "chapter_name": "",

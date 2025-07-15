@@ -249,8 +249,10 @@ pip install --upgrade pymupdf pillow
 ```ini
 [lecture]
 default_duration = 90           # 调整默认时长
-include_interaction = true      # 包含互动环节
+include_interaction = false     # 纯讲授模式，无互动环节
 include_examples = true         # 包含案例说明
+no_questions = true            # 不包含提问
+no_blackboard = true           # 不包含板书
 time_per_slide = 2.5           # 每张幻灯片基础时间
 ```
 

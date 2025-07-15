@@ -38,7 +38,7 @@ class CourseContext:
     elapsed_time: int
     key_concepts: List[str]
     teaching_progression: List[str]
-    interaction_points: List[int]
+    # interaction_points: List[int]  # 纯讲授模式，无需互动点
     example_slides: List[int]
 
 
@@ -64,7 +64,7 @@ class ContextManager:
             elapsed_time=0,
             key_concepts=[],
             teaching_progression=[],
-            interaction_points=[],
+            # interaction_points=[],  # 纯讲授模式，无需互动点
             example_slides=[]
         )
         
@@ -94,7 +94,7 @@ class ContextManager:
         self.course_context.total_duration = total_duration
         
         # 预计算互动点和示例点
-        self._calculate_interaction_points()
+        # self._calculate_interaction_points()  # 纯讲授模式，无需计算互动点
         self._calculate_example_points()
         
         self.logger.info(f"初始化课程: {course_title}, {total_slides}张幻灯片, {total_duration}分钟")
@@ -214,7 +214,7 @@ class ContextManager:
             Dict[str, Any]: 教学建议
         """
         suggestions = {
-            'interaction_needed': slide_number in self.course_context.interaction_points,
+            'interaction_needed': False,  # 纯讲授模式，无需互动
             'example_needed': slide_number in self.course_context.example_slides,
             'time_allocation': self._calculate_time_allocation(slide_number),
             'difficulty_level': self._assess_difficulty(slide_number),
@@ -366,15 +366,9 @@ class ContextManager:
             self.course_context.teaching_progression.append(slide_context.title)
     
     def _calculate_interaction_points(self):
-        """计算互动点"""
-        if self.course_context.total_slides == 0:
-            return
-        
-        # 每10-15张幻灯片安排一次互动
-        interaction_interval = max(10, self.course_context.total_slides // 6)
-        
-        for i in range(interaction_interval, self.course_context.total_slides, interaction_interval):
-            self.course_context.interaction_points.append(i)
+        """计算互动点 - 已禁用，纯讲授模式无需互动"""
+        # 纯讲授模式，不计算互动点
+        pass
     
     def _calculate_example_points(self):
         """计算示例点"""
@@ -534,7 +528,7 @@ class ContextManager:
             elapsed_time=0,
             key_concepts=[],
             teaching_progression=[],
-            interaction_points=[],
+            # interaction_points=[],  # 纯讲授模式，无需互动点
             example_slides=[]
         )
         

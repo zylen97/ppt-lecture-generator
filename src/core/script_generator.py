@@ -493,11 +493,6 @@ class ScriptGenerator:
                 formatted_lines.append(f"> ⏰ **{line}**")
                 formatted_lines.append("")
                 
-            elif self._is_interaction_cue(line):
-                # 互动提示 - 特殊标记
-                formatted_lines.append(f"💬 **互动环节**: {line}")
-                formatted_lines.append("")
-                
             elif self._is_key_point(line):
                 # 关键要点 - 突出显示
                 formatted_lines.append(f"⭐ **重点**: {line}")
@@ -509,11 +504,6 @@ class ScriptGenerator:
                 formatted_lines.append(f"```")
                 formatted_lines.append(line)
                 formatted_lines.append(f"```")
-                formatted_lines.append("")
-                
-            elif self._is_question(line):
-                # 问题 - 醒目标记
-                formatted_lines.append(f"❓ **提问**: {line}")
                 formatted_lines.append("")
                 
             elif self._is_transition(line):

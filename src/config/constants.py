@@ -89,7 +89,7 @@ DEFAULT_CONFIG = {
         'default_duration': 90,
         'language': 'zh-CN',
         'style': 'academic',
-        'include_interaction': True,
+        'include_interaction': False,
         'include_examples': True,
         'course_name': '',
         'chapter_name': '',
@@ -134,7 +134,7 @@ LECTURE_GENERATION = {
     'max_duration': 240,
     'default_duration': 90,
     'time_per_slide': 2.0,
-    'interaction_frequency': 10,  # 每10分钟一次互动
+    'interaction_frequency': 0,   # 纯讲授模式，无互动
     'example_frequency': 5       # 每5张幻灯片一个例子
 }
 
@@ -217,8 +217,8 @@ PROMPT_TEMPLATES = {
 4. **教学要素识别**
    - 适合的讲解顺序
    - 需要重点强调的部分
-   - 可能的学生疑问点
-   - 建议的板书内容
+   - 核心概念和关键术语
+   - 逻辑连接和过渡要点
 
 请用中文详细回答，确保准确识别所有文字和视觉信息。
 """,
@@ -275,10 +275,10 @@ PROMPT_TEMPLATES = {
 
 请提供：
 1. **内容整合**：将文本和视觉信息整合成完整的知识点
-2. **讲解建议**：如何有效地讲解这些内容
-3. **互动设计**：建议的课堂互动方式
+2. **讲解建议**：如何有效地进行连续讲授
+3. **重点标记**：标出需要特别强调的内容
 4. **时间分配**：各部分内容的建议讲解时间
-5. **板书要点**：需要在黑板上展示的关键内容
+5. **过渡要点**：如何自然地连接不同知识点
 
 请用中文回答，确保讲稿自然流畅。
 """

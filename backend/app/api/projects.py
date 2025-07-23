@@ -118,7 +118,7 @@ def list_projects(
     semester: Optional[str] = Query(None, max_length=50, description="按学期筛选"),
     instructor: Optional[str] = Query(None, max_length=100, description="按教师筛选"),
     order_by: str = Query("updated_at", description="排序字段"),
-    order_direction: str = Query("desc", regex="^(asc|desc)$", description="排序方向"),
+    order_direction: str = Query("desc", pattern="^(asc|desc)$", description="排序方向"),
     db: Session = Depends(get_db)
 ):
     """

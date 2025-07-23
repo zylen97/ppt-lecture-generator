@@ -152,7 +152,7 @@ class ProjectListRequest(BaseModel):
     semester: Optional[str] = Field(None, max_length=50, description="按学期筛选")
     instructor: Optional[str] = Field(None, max_length=100, description="按教师筛选")
     order_by: str = Field("updated_at", description="排序字段")
-    order_direction: str = Field("desc", regex="^(asc|desc)$", description="排序方向")
+    order_direction: str = Field("desc", pattern="^(asc|desc)$", description="排序方向")
 
 
 class ProjectListResponse(BaseModel):
@@ -191,7 +191,7 @@ class ProjectExportRequest(BaseModel):
     include_files: bool = Field(True, description="是否包含文件")
     include_tasks: bool = Field(True, description="是否包含任务")
     include_scripts: bool = Field(True, description="是否包含讲稿")
-    export_format: str = Field("json", regex="^(json|xlsx|zip)$", description="导出格式")
+    export_format: str = Field("json", pattern="^(json|xlsx|zip)$", description="导出格式")
 
 
 class ProjectTemplateResponse(BaseModel):

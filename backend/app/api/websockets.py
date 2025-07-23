@@ -25,6 +25,8 @@ class ConnectionManager:
         self.task_connections: Dict[int, List[WebSocket]] = {}
         # 全局任务监听连接
         self.global_connections: Set[WebSocket] = set()
+        # 项目级别任务监听连接
+        self.project_connections: Dict[int, Set[WebSocket]] = {}
         
     async def connect_task(self, task_id: int, websocket: WebSocket):
         """连接到特定任务的进度监听"""
@@ -54,6 +56,22 @@ class ConnectionManager:
         self.global_connections.discard(websocket)
         logger.info("Global task monitoring WebSocket disconnected")
         
+    async def connect_project(self, project_id: int, websocket: WebSocket):
+        """连接到特定项目的任务监听"""
+        await websocket.accept()
+        if project_id not in self.project_connections:
+            self.project_connections[project_id] = set()
+        self.project_connections[project_id].add(websocket)
+        logger.info(f"WebSocket connected for project {project_id}")
+        
+    def disconnect_project(self, project_id: int, websocket: WebSocket):
+        """断开特定项目的连接"""
+        if project_id in self.project_connections:
+            self.project_connections[project_id].discard(websocket)
+            if not self.project_connections[project_id]:
+                del self.project_connections[project_id]
+        logger.info(f"WebSocket disconnected for project {project_id}")
+        
     async def send_task_progress(self, task_id: int, message: dict):
         """发送任务进度到特定任务的所有连接"""
         if task_id in self.task_connections:
@@ -80,6 +98,22 @@ class ConnectionManager:
         # 清理断开的连接
         for websocket in disconnected:
             self.disconnect_global(websocket)
+            
+    async def broadcast_project_update(self, project_id: int, message: dict):
+        """广播任务更新到特定项目的所有连接"""
+        if project_id not in self.project_connections:
+            return
+            
+        disconnected = []
+        for websocket in self.project_connections[project_id]:
+            try:
+                await websocket.send_text(json.dumps(message))
+            except:
+                disconnected.append(websocket)
+        
+        # 清理断开的连接
+        for websocket in disconnected:
+            self.disconnect_project(project_id, websocket)
 
 # 全局连接管理器实例
 manager = ConnectionManager()
@@ -198,6 +232,67 @@ async def global_task_monitor_websocket(websocket: WebSocket):
         logger.error(f"Global monitor WebSocket error: {e}")
         manager.disconnect_global(websocket)
 
+@router.websocket("/projects/{project_id}/monitor")
+async def project_task_monitor_websocket(websocket: WebSocket, project_id: int):
+    """
+    项目级别任务状态监听WebSocket
+    用于监听特定项目下的所有任务状态变化
+    """
+    await manager.connect_project(project_id, websocket)
+    
+    last_task_states = {}
+    
+    try:
+        while True:
+            # 获取指定项目的所有任务状态
+            db = SessionLocal()
+            try:
+                tasks = db.query(Task).filter(Task.project_id == project_id).all()
+                current_states = {}
+                changed_tasks = []
+                
+                for task in tasks:
+                    current_state = {
+                        "id": task.id,
+                        "project_id": task.project_id,
+                        "status": task.status.value if hasattr(task.status, 'value') else str(task.status),
+                        "progress": task.progress,
+                        "started_at": task.started_at.isoformat() if task.started_at else None,
+                        "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+                        "error_message": task.error_message
+                    }
+                    
+                    current_states[task.id] = current_state
+                    
+                    # 检查是否有变化
+                    if task.id not in last_task_states or last_task_states[task.id] != current_state:
+                        changed_tasks.append(current_state)
+                
+                # 如果有任务状态变化，发送更新
+                if changed_tasks:
+                    update_message = {
+                        "type": "project_tasks_update",
+                        "project_id": project_id,
+                        "changed_tasks": changed_tasks,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    
+                    await websocket.send_text(json.dumps(update_message))
+                
+                last_task_states = current_states
+                
+            finally:
+                db.close()
+            
+            # 等待2秒后再次检查
+            await asyncio.sleep(2)
+            
+    except WebSocketDisconnect:
+        manager.disconnect_project(project_id, websocket)
+    except Exception as e:
+        logger.error(f"Project {project_id} monitor WebSocket error: {e}")
+        manager.disconnect_project(project_id, websocket)
+
 def get_status_message(status: TaskStatus) -> str:
     """获取状态消息"""
     status_messages = {
@@ -225,6 +320,15 @@ async def notify_task_progress(task_id: int, progress: int, message: str = ""):
     
     # 广播给全局监听者
     await manager.broadcast_task_update(progress_data)
+    
+    # 广播给项目级监听者
+    db = SessionLocal()
+    try:
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if task and task.project_id:
+            await manager.broadcast_project_update(task.project_id, progress_data)
+    finally:
+        db.close()
 
 async def notify_task_status_change(task_id: int, status: TaskStatus, error_message: str = None):
     """通知任务状态变化"""
@@ -241,3 +345,12 @@ async def notify_task_status_change(task_id: int, status: TaskStatus, error_mess
     
     # 广播给全局监听者
     await manager.broadcast_task_update(status_data)
+    
+    # 广播给项目级监听者
+    db = SessionLocal()
+    try:
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if task and task.project_id:
+            await manager.broadcast_project_update(task.project_id, status_data)
+    finally:
+        db.close()

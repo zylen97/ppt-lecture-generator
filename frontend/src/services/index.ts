@@ -4,4 +4,5 @@ export { FileService } from './fileService';
 export { TaskService, TaskWebSocketService } from './taskService';
 export { ScriptService } from './scriptService';
 export { ConfigService } from './configService';
+export { ProjectService } from './projectService';
 export { GlobalTaskMonitor, getGlobalTaskMonitor } from './globalTaskMonitor';

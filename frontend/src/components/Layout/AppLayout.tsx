@@ -9,6 +9,8 @@ import {
   Space,
   Button,
   theme,
+  Text,
+  Divider,
 } from 'antd';
 import {
   DashboardOutlined,
@@ -20,7 +22,11 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SoundOutlined,
+  FolderOutlined,
 } from '@ant-design/icons';
+import { useCurrentProject } from '@/contexts';
+import { ProjectSelector } from '@/components/Project';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -30,6 +36,7 @@ const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
+  const { currentProject } = useCurrentProject();
 
   // 菜单项配置
   const menuItems = [
@@ -39,14 +46,19 @@ const AppLayout: React.FC = () => {
       label: '仪表盘',
     },
     {
-      key: '/upload',
-      icon: <UploadOutlined />,
-      label: '上传文件',
+      key: '/projects',
+      icon: <UnorderedListOutlined />,
+      label: '项目管理',
     },
     {
-      key: '/tasks',
-      icon: <UnorderedListOutlined />,
-      label: '任务管理',
+      key: '/ppt-processor',
+      icon: <FileTextOutlined />,
+      label: 'PPT生成讲稿',
+    },
+    {
+      key: '/media-processor',
+      icon: <SoundOutlined />,
+      label: '音视频转讲稿',
     },
     {
       key: '/scripts',
@@ -171,6 +183,22 @@ const AppLayout: React.FC = () => {
                 height: 64,
               }}
             />
+          </div>
+
+          {/* 全局项目选择器 */}
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+            <Space align="center" size="middle">
+              <FolderOutlined style={{ color: token.colorTextSecondary }} />
+              <Text strong style={{ color: token.colorText }}>
+                {currentProject ? currentProject.name : '未选择项目'}
+              </Text>
+              <Divider type="vertical" />
+              <ProjectSelector 
+                style={{ minWidth: 220 }}
+                placeholder="选择或创建项目"
+                onCreateProject={() => navigate('/projects')}
+              />
+            </Space>
           </div>
 
           <div>

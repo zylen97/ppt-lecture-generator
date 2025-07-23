@@ -2,7 +2,7 @@
 任务管理API
 """
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 import asyncio
@@ -10,7 +10,7 @@ import json
 from typing import List
 
 from ..database import get_db
-from ..models import Task, File
+from ..models import Task, File, TaskType, TaskStatus
 from ..schemas import TaskCreate, TaskResponse, TaskUpdate, TaskProgress
 from ..services.task_service import TaskService
 
@@ -36,7 +36,8 @@ def create_task(
     task = Task(
         file_id=task_data.file_id,
         task_type=task_data.task_type,
-        config_snapshot=json.dumps(task_data.config_snapshot) if task_data.config_snapshot else None
+        config_snapshot=json.dumps(task_data.config_snapshot) if task_data.config_snapshot else None,
+        project_id=task_data.project_id
     )
     
     db.add(task)
@@ -56,13 +57,30 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="任务不存在"
         )
-    return task
+    
+    # 准备响应数据，将config_snapshot转换为字典格式
+    response_data = {
+        "id": task.id,
+        "file_id": task.file_id,
+        "task_type": task.task_type,
+        "status": task.status,
+        "progress": task.progress,
+        "config_snapshot": task.config_snapshot_dict,
+        "started_at": task.started_at,
+        "completed_at": task.completed_at,
+        "error_message": task.error_message,
+        "user_id": task.user_id,
+        "duration": task.duration,
+    }
+    
+    return response_data
 
-@router.get("/", response_model=List[TaskResponse])
+@router.get("/", response_model=List[TaskResponse])  
 def list_tasks(
     skip: int = 0,
     limit: int = 50,
     status_filter: str = None,
+    project_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -73,8 +91,31 @@ def list_tasks(
     if status_filter:
         query = query.filter(Task.status == status_filter)
     
+    # 可选的项目过滤
+    if project_id is not None:
+        query = query.filter(Task.project_id == project_id)
+    
     tasks = query.offset(skip).limit(limit).all()
-    return tasks
+    
+    # 转换每个任务的config_snapshot为字典格式
+    response_tasks = []
+    for task in tasks:
+        response_data = {
+            "id": task.id,
+            "file_id": task.file_id,
+            "task_type": task.task_type,
+            "status": task.status,
+            "progress": task.progress,
+            "config_snapshot": task.config_snapshot_dict,
+            "started_at": task.started_at,
+            "completed_at": task.completed_at,
+            "error_message": task.error_message,
+            "user_id": task.user_id,
+            "duration": task.duration,
+        }
+        response_tasks.append(response_data)
+    
+    return response_tasks
 
 @router.put("/{task_id}", response_model=TaskResponse)
 def update_task(
@@ -108,6 +149,7 @@ def update_task(
 @router.post("/{task_id}/start")
 async def start_task(
     task_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """
@@ -120,18 +162,20 @@ async def start_task(
             detail="任务不存在"
         )
     
-    if task.status != "pending":
+    if task.status != TaskStatus.PENDING:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="只有待处理状态的任务可以启动"
         )
     
-    # 启动任务
-    task.start()
-    db.commit()
-    
-    # 在后台执行任务
-    asyncio.create_task(run_task_background(task_id))
+    # 根据任务类型启动不同的处理函数
+    if task.task_type == TaskType.AUDIO_VIDEO_TO_SCRIPT:
+        # 音视频转录任务
+        from ..api.media import run_transcription_task
+        background_tasks.add_task(run_transcription_task, task_id)
+    else:
+        # 其他类型任务
+        asyncio.create_task(run_task_background(task_id))
     
     return {"message": "任务已启动", "task_id": task_id}
 

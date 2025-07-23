@@ -8,11 +8,13 @@ export class TaskService {
   static async createTask(data: {
     file_id: number;
     task_type?: TaskType;
+    project_id?: number;
     config_snapshot?: Record<string, any>;
   }): Promise<Task> {
     const response = await api.post<Task>('/tasks/', {
       file_id: data.file_id,
       task_type: data.task_type || TaskType.PPT_TO_SCRIPT,
+      project_id: data.project_id,
       config_snapshot: data.config_snapshot,
     });
     return response.data;
@@ -33,6 +35,8 @@ export class TaskService {
     skip?: number;
     limit?: number;
     status_filter?: TaskStatus;
+    project_id?: number;
+    task_type?: TaskType;
   }): Promise<Task[]> {
     const response = await api.get<Task[]>('/tasks/', { params });
     return response.data;
@@ -75,17 +79,19 @@ export class TaskService {
   static async createAndStartTask(data: {
     file_id: number;
     config: GenerationConfig;
+    project_id?: number;
   }): Promise<{ task: Task; started: boolean }> {
     // 1. 创建任务
-    const task = await this.createTask({
+    const task = await TaskService.createTask({
       file_id: data.file_id,
       task_type: TaskType.PPT_TO_SCRIPT,
+      project_id: data.project_id,
       config_snapshot: data.config,
     });
 
     // 2. 启动任务
     try {
-      await this.startTask(task.id);
+      await TaskService.startTask(task.id);
       return { task, started: true };
     } catch (error) {
       return { task, started: false };
@@ -104,7 +110,7 @@ export class TaskService {
   }> {
     // 这里可以实现一个专门的统计接口
     // 目前使用获取任务列表的方式
-    const tasks = await this.getTasks({ limit: 1000 });
+    const tasks = await TaskService.getTasks({ limit: 1000 });
     
     const stats = {
       total: tasks.length,
@@ -269,6 +275,89 @@ export class TaskWebSocketService {
       }, this.reconnectInterval * this.reconnectAttempts);
     } else {
       console.error('Max reconnection attempts reached');
+    }
+  }
+
+  /**
+   * 获取连接状态
+   */
+  isConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+}
+
+/**
+ * 项目级别WebSocket连接管理类
+ */
+export class ProjectTaskWebSocketService {
+  private ws: WebSocket | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectInterval = 3000; // 3秒
+
+  /**
+   * 连接项目级别WebSocket
+   */
+  connect(projectId: number, onUpdate: (update: any) => void, onError?: (error: Event) => void): void {
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/tasks/projects/${projectId}/monitor`;
+    
+    try {
+      this.ws = new WebSocket(wsUrl);
+
+      this.ws.onopen = () => {
+        console.log(`Project WebSocket connected for project ${projectId}`);
+        this.reconnectAttempts = 0;
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          onUpdate(data);
+        } catch (error) {
+          console.error('Project WebSocket message parse error:', error);
+        }
+      };
+
+      this.ws.onclose = (event) => {
+        console.log('Project WebSocket closed:', event.code, event.reason);
+        this.attemptReconnect(projectId, onUpdate, onError);
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('Project WebSocket error:', error);
+        if (onError) onError(error);
+      };
+
+    } catch (error) {
+      console.error('Project WebSocket connection failed:', error);
+      if (onError) onError(error as Event);
+    }
+  }
+
+  /**
+   * 断开WebSocket连接
+   */
+  disconnect(): void {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    this.reconnectAttempts = 0;
+  }
+
+  /**
+   * 尝试重连
+   */
+  private attemptReconnect(projectId: number, onUpdate: (update: any) => void, onError?: (error: Event) => void): void {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      console.log(`Attempting to reconnect project WebSocket... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+      
+      setTimeout(() => {
+        this.connect(projectId, onUpdate, onError);
+      }, this.reconnectInterval * this.reconnectAttempts);
+    } else {
+      console.error('Max reconnection attempts reached for project WebSocket');
     }
   }
 

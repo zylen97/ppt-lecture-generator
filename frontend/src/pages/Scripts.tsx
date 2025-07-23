@@ -39,6 +39,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { ScriptService, TaskService, FileService } from '@/services';
 import { Script, ScriptSummary, Task, FileInfo } from '@/types';
+import { useCurrentProject } from '@/contexts';
 import { formatDateTime, formatRelativeTime } from '@/utils';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
@@ -171,6 +172,7 @@ const ScriptEditModal: React.FC<ScriptEditModalProps> = ({
 
 const Scripts: React.FC = () => {
   const queryClient = useQueryClient();
+  const { currentProject } = useCurrentProject();
   
   // 状态管理
   const [selectedScripts, setSelectedScripts] = useState<number[]>([]);
@@ -181,28 +183,40 @@ const Scripts: React.FC = () => {
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [previewContent, setPreviewContent] = useState<string>('');
 
-  // 数据查询
+  // 数据查询 - 基于当前项目
   const { data: scripts = [], isLoading, error } = useQuery(
-    ['scripts', filters],
-    () => ScriptService.getScripts({
+    ['scripts', currentProject?.id, filters],
+    () => currentProject ? ScriptService.getScripts({
+      project_id: currentProject.id,
       task_id: filters.task_id,
       limit: 1000,
-    })
+    }) : Promise.resolve([]),
+    {
+      enabled: !!currentProject,
+    }
   );
 
   const { data: tasks = [] } = useQuery(
-    'tasks',
-    () => TaskService.getTasks({ limit: 1000 }),
+    ['tasks', currentProject?.id],
+    () => currentProject ? TaskService.getTasks({ 
+      project_id: currentProject.id,
+      limit: 1000 
+    }) : Promise.resolve([]),
     {
       staleTime: 5 * 60 * 1000,
+      enabled: !!currentProject,
     }
   );
 
   const { data: files = [] } = useQuery(
-    'files',
-    () => FileService.getFiles({ limit: 1000 }),
+    ['files', currentProject?.id],
+    () => currentProject ? FileService.getFiles({ 
+      project_id: currentProject.id,
+      limit: 1000 
+    }) : Promise.resolve([]),
     {
       staleTime: 5 * 60 * 1000,
+      enabled: !!currentProject,
     }
   );
 
@@ -254,7 +268,7 @@ const Scripts: React.FC = () => {
   // Mutations
   const deleteScriptMutation = useMutation(ScriptService.deleteScript, {
     onSuccess: () => {
-      queryClient.invalidateQueries('scripts');
+      queryClient.invalidateQueries(['scripts', currentProject?.id]);
       message.success('讲稿删除成功');
     },
     onError: () => {
@@ -492,12 +506,51 @@ const Scripts: React.FC = () => {
 
   return (
     <div className="scripts-page">
-      {/* 页面标题和统计 */}
+      {/* 页面标题 */}
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>讲稿管理</Title>
         <Paragraph type="secondary">
-          管理和编辑所有生成的讲稿内容
+          {currentProject ? 
+            `项目：${currentProject.name} - 管理和编辑项目中的讲稿内容` : 
+            '请在顶部选择一个项目以查看相关讲稿'
+          }
         </Paragraph>
+      </div>
+
+      {/* 无项目选中的提示 */}
+      {!currentProject && (
+        <Card style={{ marginBottom: 24 }}>
+          <Empty
+            description="未选择项目"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          >
+            <Space direction="vertical" align="center">
+              <Text type="secondary">
+                请选择一个项目以查看项目相关的讲稿列表
+              </Text>
+              <Space>
+                <Button 
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => window.open('/projects', '_blank')}
+                >
+                  创建项目
+                </Button>
+                <Button 
+                  icon={<FileTextOutlined />}
+                  onClick={() => window.open('/projects', '_blank')}
+                >
+                  浏览项目
+                </Button>
+              </Space>
+            </Space>
+          </Empty>
+        </Card>
+      )}
+
+      {/* 只有选择了项目才显示以下内容 */}
+      {currentProject && (
+        <div>
 
         {/* 统计卡片 */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
@@ -597,7 +650,11 @@ const Scripts: React.FC = () => {
                 />
                 <Button
                   icon={<ReloadOutlined />}
-                  onClick={() => queryClient.invalidateQueries('scripts')}
+                  onClick={() => {
+                    queryClient.invalidateQueries(['scripts', currentProject?.id]);
+                    queryClient.invalidateQueries(['tasks', currentProject?.id]);
+                    queryClient.invalidateQueries(['files', currentProject?.id]);
+                  }}
                   loading={isLoading}
                 >
                   刷新
@@ -741,6 +798,8 @@ const Scripts: React.FC = () => {
           </pre>
         </div>
       </Modal>
+        </div>
+      )}
     </div>
   );
 };

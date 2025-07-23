@@ -13,6 +13,8 @@ import {
   Tag,
   Button,
   Empty,
+  Alert,
+  Divider,
 } from 'antd';
 import {
   FileTextOutlined,
@@ -21,36 +23,83 @@ import {
   ExclamationCircleOutlined,
   UploadOutlined,
   EyeOutlined,
+  FolderOutlined,
+  UserOutlined,
+  BookOutlined,
+  CalendarOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import { useQuery } from 'react-query';
 import { TaskService, FileService, ScriptService } from '@/services';
+import { useCurrentProject } from '@/contexts';
 import { formatDateTime, formatFileSize } from '@/utils';
 
 const { Title, Text, Paragraph } = Typography;
 
 const Dashboard: React.FC = () => {
-  // 获取统计数据
+  const { currentProject, currentProjectLoading } = useCurrentProject();
+
+  // 获取统计数据 - 基于当前项目
   const { data: taskStats } = useQuery(
-    'taskStats',
-    TaskService.getTaskStats,
+    ['taskStats', currentProject?.id],
+    () => currentProject ? TaskService.getTasks({ 
+      project_id: currentProject.id,
+      limit: 1000 
+    }).then(tasks => {
+      const stats = {
+        total: tasks.length,
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        failed: 0,
+      };
+      
+      tasks.forEach(task => {
+        switch (task.status) {
+          case 'pending':
+            stats.pending++;
+            break;
+          case 'processing':
+            stats.processing++;
+            break;
+          case 'completed':
+            stats.completed++;
+            break;
+          case 'failed':
+            stats.failed++;
+            break;
+        }
+      });
+      
+      return stats;
+    }) : Promise.resolve({ total: 0, pending: 0, processing: 0, completed: 0, failed: 0 }),
     {
-      refetchInterval: 30000, // 30秒刷新一次
+      refetchInterval: 30000,
+      enabled: !!currentProject,
     }
   );
 
   const { data: recentFiles } = useQuery(
-    'recentFiles',
-    () => FileService.getFiles({ limit: 5 }),
+    ['recentFiles', currentProject?.id],
+    () => currentProject ? FileService.getFiles({ 
+      limit: 5, 
+      project_id: currentProject.id 
+    }) : Promise.resolve([]),
     {
       refetchInterval: 30000,
+      enabled: !!currentProject,
     }
   );
 
   const { data: recentScripts } = useQuery(
-    'recentScripts',
-    () => ScriptService.getScripts({ limit: 5 }),
+    ['recentScripts', currentProject?.id],
+    () => currentProject ? ScriptService.getScripts({ 
+      limit: 5, 
+      project_id: currentProject.id 
+    }) : Promise.resolve([]),
     {
       refetchInterval: 30000,
+      enabled: !!currentProject,
     }
   );
 
@@ -118,9 +167,121 @@ const Dashboard: React.FC = () => {
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>仪表盘</Title>
         <Paragraph type="secondary">
-          欢迎使用PPT讲稿生成器，这里是系统的总体概况
+          {currentProject ? 
+            `项目：${currentProject.name} - 查看项目相关的统计数据和文件信息` : 
+            '请在顶部选择一个项目以查看相关数据'
+          }
         </Paragraph>
       </div>
+
+      {/* 项目概览卡片 */}
+      {currentProject && (
+        <Card 
+          title="项目概览" 
+          style={{ marginBottom: 24 }}
+          extra={
+            <Button 
+              type="link" 
+              icon={<EyeOutlined />}
+              onClick={() => window.open(`/projects/${currentProject.id}`, '_blank')}
+            >
+              查看详情
+            </Button>
+          }
+        >
+          <Row gutter={16}>
+            <Col xs={24} sm={12} md={8}>
+              <Space>
+                <Avatar 
+                  size={48}
+                  icon={<FolderOutlined />}
+                  style={{ backgroundColor: '#1890ff' }}
+                />
+                <div>
+                  <Text strong style={{ fontSize: 16 }}>{currentProject.name}</Text>
+                  <br />
+                  <Text type="secondary">{currentProject.description || '暂无描述'}</Text>
+                </div>
+              </Space>
+            </Col>
+            <Col xs={24} sm={12} md={16}>
+              <Row gutter={[16, 8]}>
+                {currentProject.course_code && (
+                  <Col xs={12} sm={8} md={6}>
+                    <Space size={4}>
+                      <BookOutlined style={{ color: '#8c8c8c' }} />
+                      <Text>{currentProject.course_code}</Text>
+                    </Space>
+                  </Col>
+                )}
+                {currentProject.instructor && (
+                  <Col xs={12} sm={8} md={6}>
+                    <Space size={4}>
+                      <UserOutlined style={{ color: '#8c8c8c' }} />
+                      <Text>{currentProject.instructor}</Text>
+                    </Space>
+                  </Col>
+                )}
+                {currentProject.semester && (
+                  <Col xs={12} sm={8} md={6}>
+                    <Space size={4}>
+                      <CalendarOutlined style={{ color: '#8c8c8c' }} />
+                      <Text>{currentProject.semester}</Text>
+                    </Space>
+                  </Col>
+                )}
+                <Col xs={24} md={12}>
+                  <Text style={{ fontSize: '12px', color: '#8c8c8c' }}>项目进度</Text>
+                  <br />
+                  <Progress 
+                    percent={currentProject.statistics?.completion_rate || 0}
+                    size="small"
+                    strokeColor={{
+                      '0%': '#108ee9',
+                      '100%': '#87d068',
+                    }}
+                  />
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </Card>
+      )}
+
+      {/* 无项目选中的提示 */}
+      {!currentProject && (
+        <Card style={{ marginBottom: 24 }}>
+          <Empty
+            description="未选择项目"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          >
+            <Space direction="vertical" align="center">
+              <Text type="secondary">
+                请选择一个项目以查看项目相关的统计数据和文件信息
+              </Text>
+              <Space>
+                <Button 
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => window.open('/projects', '_blank')}
+                >
+                  创建项目
+                </Button>
+                <Button 
+                  icon={<FolderOutlined />}
+                  onClick={() => window.open('/projects', '_blank')}
+                >
+                  浏览项目
+                </Button>
+              </Space>
+            </Space>
+          </Empty>
+        </Card>
+      )}
+
+      {/* 只有选择了项目才显示以下内容 */}
+      {currentProject && (
+        <div>
 
       {/* 统计卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>

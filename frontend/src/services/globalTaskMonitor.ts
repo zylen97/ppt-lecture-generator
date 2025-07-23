@@ -19,12 +19,13 @@ export class GlobalTaskMonitor {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3秒
   private isManualDisconnect = false;
+  private currentProjectId: number | null = null;
   
   private updateCallbacks: Set<TaskUpdateCallback> = new Set();
   private statusCallbacks: Set<ConnectionStatusCallback> = new Set();
 
   constructor() {
-    this.connect();
+    // 不在构造函数中自动连接，等待项目选择
   }
 
   /**
@@ -44,6 +45,29 @@ export class GlobalTaskMonitor {
   }
 
   /**
+   * 设置当前项目并连接到相应的WebSocket
+   */
+  setProject(projectId: number | null): void {
+    if (this.currentProjectId === projectId) {
+      return; // 项目没有变化，无需重连
+    }
+
+    this.currentProjectId = projectId;
+    this.disconnectWebSocket();
+    
+    if (projectId) {
+      this.connect();
+    }
+  }
+
+  /**
+   * 获取当前项目ID
+   */
+  getCurrentProjectId(): number | null {
+    return this.currentProjectId;
+  }
+
+  /**
    * 建立WebSocket连接
    */
   private connect(): void {
@@ -51,14 +75,20 @@ export class GlobalTaskMonitor {
       return;
     }
 
+    if (!this.currentProjectId) {
+      console.log('No project selected, WebSocket not connected');
+      return;
+    }
+
+    // 使用相对路径以便通过Vite代理
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/tasks/monitor`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/tasks/projects/${this.currentProjectId}/monitor`;
 
     try {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('Global task monitor WebSocket connected');
+        console.log(`Project task monitor WebSocket connected for project ${this.currentProjectId}`);
         this.reconnectAttempts = 0;
         this.notifyConnectionStatus(true);
       };
@@ -73,7 +103,7 @@ export class GlobalTaskMonitor {
       };
 
       this.ws.onclose = (event) => {
-        console.log('Global task monitor WebSocket closed:', event.code, event.reason);
+        console.log(`Project task monitor WebSocket closed for project ${this.currentProjectId}:`, event.code, event.reason);
         this.notifyConnectionStatus(false);
         
         if (!this.isManualDisconnect) {
@@ -82,7 +112,7 @@ export class GlobalTaskMonitor {
       };
 
       this.ws.onerror = (error) => {
-        console.error('Global task monitor WebSocket error:', error);
+        console.error(`Project task monitor WebSocket error for project ${this.currentProjectId}:`, error);
       };
 
     } catch (error) {
@@ -97,6 +127,12 @@ export class GlobalTaskMonitor {
   private handleMessage(message: WebSocketMessage): void {
     switch (message.type) {
       case 'tasks_update':
+        if (message.data && message.data.changed_tasks) {
+          this.notifyTaskUpdate(message.data.changed_tasks);
+        }
+        break;
+      case 'project_tasks_update':
+        // 项目级别的任务更新
         if (message.data && message.data.changed_tasks) {
           this.notifyTaskUpdate(message.data.changed_tasks);
         }
@@ -170,20 +206,28 @@ export class GlobalTaskMonitor {
   reconnect(): void {
     this.reconnectAttempts = 0;
     this.isManualDisconnect = false;
-    this.disconnect();
+    this.disconnectWebSocket();
     setTimeout(() => this.connect(), 1000);
   }
 
   /**
-   * 断开连接
+   * 仅断开WebSocket连接，不清理回调
    */
-  disconnect(): void {
-    this.isManualDisconnect = true;
-    
+  private disconnectWebSocket(): void {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+  }
+
+  /**
+   * 断开连接并清理所有回调
+   */
+  disconnect(): void {
+    this.isManualDisconnect = true;
+    this.currentProjectId = null;
+    
+    this.disconnectWebSocket();
     
     this.updateCallbacks.clear();
     this.statusCallbacks.clear();

@@ -4,10 +4,14 @@
 
 from ..database import Base
 from .user import User
-from .file import File
-from .task import Task
+from .project import Project
+from .file import File, FileType
+from .task import Task, TaskType, TaskStatus
 from .script import Script
 from .config import APIConfig, ScriptTemplate
 from .log import ProcessingLog
 
-__all__ = ["Base", "User", "File", "Task", "Script", "APIConfig", "ScriptTemplate", "ProcessingLog"]
+__all__ = [
+    "Base", "User", "Project", "File", "FileType", "Task", "TaskType", "TaskStatus", 
+    "Script", "APIConfig", "ScriptTemplate", "ProcessingLog"
+]

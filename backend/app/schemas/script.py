@@ -36,6 +36,7 @@ class ScriptResponse(ScriptBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    project_id: Optional[int] = None
     file_size: int
     reading_time: Optional[int] = None
     

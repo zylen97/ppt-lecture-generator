@@ -23,9 +23,11 @@ class Script(Base):
     is_active = Column(Boolean, default=True)  # 是否为当前版本
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)  # 所属项目
     
     # 关系
     task = relationship("Task", back_populates="scripts")
+    project = relationship("Project", back_populates="scripts")
     
     def __repr__(self):
         return f"<Script(id={self.id}, title='{self.title}', version={self.version})>"

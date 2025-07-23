@@ -31,13 +31,14 @@ def create_script(
             detail="指定的任务不存在"
         )
     
-    # 创建讲稿
+    # 创建讲稿（自动关联task的project_id）
     script = Script(
         task_id=script_data.task_id,
         title=script_data.title,
         content=script_data.content,
         format=script_data.format,
-        estimated_duration=script_data.estimated_duration
+        estimated_duration=script_data.estimated_duration,
+        project_id=task.project_id  # 自动从task继承project_id
     )
     
     # 计算字数
@@ -67,6 +68,7 @@ def list_scripts(
     skip: int = 0,
     limit: int = 50,
     task_id: int = None,
+    project_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -76,6 +78,10 @@ def list_scripts(
     
     if task_id:
         query = query.filter(Script.task_id == task_id)
+    
+    # 可选的项目过滤
+    if project_id is not None:
+        query = query.filter(Script.project_id == project_id)
     
     scripts = query.offset(skip).limit(limit).all()
     

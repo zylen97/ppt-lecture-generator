@@ -17,17 +17,18 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    port: 9527,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:7788',
         changeOrigin: true,
         secure: false
       },
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: 'http://localhost:7788',
         ws: true,
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false
       }
     }
   },

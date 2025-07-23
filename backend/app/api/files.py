@@ -21,6 +21,7 @@ router = APIRouter()
 @router.post("/upload", response_model=FileUpload)
 async def upload_file(
     file: UploadFile = FastAPIFile(...),
+    project_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -79,7 +80,8 @@ async def upload_file(
             original_name=file.filename,
             file_path=str(file_path),
             file_size=file.size,
-            file_hash=file_hash
+            file_hash=file_hash,
+            project_id=project_id
         )
         
         db.add(db_file)
@@ -126,12 +128,19 @@ def get_file(file_id: int, db: Session = Depends(get_db)):
 def list_files(
     skip: int = 0,
     limit: int = 50,
+    project_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
     获取文件列表
     """
-    files = db.query(File).offset(skip).limit(limit).all()
+    query = db.query(File)
+    
+    # 可选的项目过滤
+    if project_id is not None:
+        query = query.filter(File.project_id == project_id)
+    
+    files = query.offset(skip).limit(limit).all()
     return files
 
 @router.delete("/{file_id}")

@@ -1,45 +1,38 @@
-# Python缓存文件
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/venv/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+*.egg-info/
+build/
+dist/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
-# 虚拟环境
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE和编辑器
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# 系统文件
+# OS files
 .DS_Store
 .DS_Store?
 ._*
@@ -48,27 +41,58 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# 日志文件
+# Logs
 *.log
-logs/*.log
+logs/
+backend/logs/
+frontend.log
+backend.log
+server.log
+migration.log
 
-# 临时文件
-temp/
+# Runtime files
+*.pid
+backend.pid
+frontend.pid
+
+# Temporary files
 tmp/
-*.tmp
-*.temp
+temp/
+.cache/
+.temp/
 
-# 测试生成的文件
-output/test_*.md
-output/*_test.md
-test_format*.py
+# Database files (keep schema, ignore data)
+backend/data/*.db
+!backend/data/.gitkeep
+*.sqlite
+*.sqlite3
 
-# 配置文件中的敏感信息（保留示例）
-# config/config.ini
-
-# 覆盖文件
+# Backup files
+backup_*.db
+*.backup
+*.bak
 *.orig
 
-# 备份文件
-*.bak
-*.backup
+# Uploads directory (keep structure, ignore content)
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/media/.gitkeep
+
+# Development files
+test.wav
+*.test.*
+
+# Package manager files that shouldn't be committed
+frontend/package-lock.json
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/

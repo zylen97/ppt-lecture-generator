@@ -28,7 +28,7 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  TestOutlined,
+  ExperimentOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   SettingOutlined,
@@ -257,7 +257,7 @@ const APIConfigModal: React.FC<APIConfigModalProps> = ({
 
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Button
-            icon={<TestOutlined />}
+            icon={<ExperimentOutlined />}
             onClick={handleTest}
             loading={testLoading}
           >
@@ -439,7 +439,7 @@ API端点: ${config.endpoint}
           <Tooltip title="测试连接">
             <Button
               type="text"
-              icon={<TestOutlined />}
+              icon={<ExperimentOutlined />}
               size="small"
               onClick={() => handleTestConfig(record)}
             />

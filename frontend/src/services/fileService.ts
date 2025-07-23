@@ -7,19 +7,26 @@ export class FileService {
    */
   static async uploadFile(
     file: File,
-    onProgress?: (percentage: number) => void
+    options?: {
+      project_id?: number;
+      onProgress?: (percentage: number) => void;
+    }
   ): Promise<FileUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
+    
+    if (options?.project_id) {
+      formData.append('project_id', options.project_id.toString());
+    }
 
     const response = await api.post<FileUploadResponse>('/files/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
       onUploadProgress: (progressEvent) => {
-        if (progressEvent.total && onProgress) {
+        if (progressEvent.total && options?.onProgress) {
           const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onProgress(percentage);
+          options.onProgress(percentage);
         }
       },
     });
@@ -41,6 +48,8 @@ export class FileService {
   static async getFiles(params?: {
     skip?: number;
     limit?: number;
+    project_id?: number;
+    file_type?: string;
   }): Promise<FileInfo[]> {
     const response = await api.get<FileInfo[]>('/files/', { params });
     return response.data;

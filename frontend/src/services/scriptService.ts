@@ -37,6 +37,7 @@ export class ScriptService {
     skip?: number;
     limit?: number;
     task_id?: number;
+    project_id?: number;
   }): Promise<ScriptSummary[]> {
     const response = await api.get<ScriptSummary[]>('/scripts/', { params });
     return response.data;

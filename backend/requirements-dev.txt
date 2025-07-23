@@ -1,0 +1,27 @@
+# 开发和测试依赖
+# 安装方式: pip install -r requirements-dev.txt
+
+# 包含生产依赖
+-r requirements.txt
+
+# 测试框架
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# 代码质量
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0
+
+# 类型检查
+mypy==1.7.1
+
+# 开发工具
+ipython==8.18.1
+
+# 如果需要PPT处理功能，可以安装这些（目前代码中未使用）:
+# Pillow==10.1.0
+# PyMuPDF==1.26.3
+# python-pptx==1.0.2
+# pdf2image==1.16.3

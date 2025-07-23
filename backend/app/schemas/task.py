@@ -17,6 +17,7 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     """创建任务"""
     file_id: int
+    project_id: Optional[int] = None
 
 
 class TaskUpdate(BaseModel):
@@ -36,6 +37,7 @@ class TaskResponse(TaskBase):
     completed_at: Optional[datetime] = None
     error_message: Optional[str] = None
     user_id: Optional[int] = None
+    project_id: Optional[int] = None
     duration: Optional[float] = None
     
     class Config:

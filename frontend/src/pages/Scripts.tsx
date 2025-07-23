@@ -550,8 +550,7 @@ const Scripts: React.FC = () => {
 
       {/* 只有选择了项目才显示以下内容 */}
       {currentProject && (
-        <div>
-
+        <>
         {/* 统计卡片 */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={6}>
@@ -596,7 +595,6 @@ const Scripts: React.FC = () => {
             </Card>
           </Col>
         </Row>
-      </div>
 
       <Card>
         {/* 筛选和搜索工具栏 */}
@@ -798,7 +796,7 @@ const Scripts: React.FC = () => {
           </pre>
         </div>
       </Modal>
-        </div>
+        </>
       )}
     </div>
   );

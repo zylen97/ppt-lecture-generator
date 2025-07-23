@@ -237,7 +237,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         </Button>,
       ]}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

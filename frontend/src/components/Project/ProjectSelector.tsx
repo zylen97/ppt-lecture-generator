@@ -11,6 +11,7 @@ import { useCurrentProject, useProjectList } from '@/contexts';
 import { ProjectSummary } from '@/types';
 
 const { Option } = Select;
+const { Text } = Typography;
 
 interface ProjectSelectorProps {
   placeholder?: string;
@@ -20,7 +21,7 @@ interface ProjectSelectorProps {
   style?: React.CSSProperties;
   onCreateProject?: () => void;
   disabled?: boolean;
-  dropdownClassName?: string;
+  popupClassName?: string;
 }
 
 const ProjectSelector: React.FC<ProjectSelectorProps> = ({
@@ -31,7 +32,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   style,
   onCreateProject,
   disabled = false,
-  dropdownClassName,
+  popupClassName,
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const { currentProject, selectProject, clearCurrentProject } = useCurrentProject();
@@ -51,11 +52,13 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   }, [projects, searchValue]);
 
   // 处理项目选择
-  const handleProjectSelect = (projectId: number | null) => {
+  const handleProjectSelect = (projectId: number | string | null) => {
     if (projectId === null) {
       clearCurrentProject();
+    } else if (projectId === 'create-new') {
+      onCreateProject && onCreateProject();
     } else {
-      selectProject(projectId);
+      selectProject(projectId as number);
     }
   };
 
@@ -148,27 +151,6 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
     </div>
   );
 
-  // 渲染下拉菜单底部
-  const renderDropdownFooter = () => {
-    if (!showCreateBtn) return null;
-    
-    return (
-      <div style={{ 
-        borderTop: '1px solid #f0f0f0', 
-        padding: '8px 12px',
-        backgroundColor: '#fafafa' 
-      }}>
-        <Button 
-          type="link" 
-          icon={<PlusOutlined />} 
-          onClick={onCreateProject}
-          style={{ padding: 0, height: 'auto' }}
-        >
-          创建新项目
-        </Button>
-      </div>
-    );
-  };
 
   return (
     <Select
@@ -183,18 +165,20 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
       searchValue={searchValue}
       onSearch={handleSearch}
       onChange={handleProjectSelect}
-      dropdownClassName={dropdownClassName}
+      classNames={{ popup: { root: popupClassName } }}
+      styles={{ popup: { root: { maxHeight: 400 } } }}
       optionFilterProp="children"
       notFoundContent={projectsLoading ? <Spin size="small" /> : renderEmpty()}
-      dropdownRender={(menu) => (
-        <div>
-          {menu}
-          {renderDropdownFooter()}
-        </div>
-      )}
-      dropdownStyle={{ maxHeight: 400 }}
     >
       {filteredProjects.map(renderProjectOption)}
+      {showCreateBtn && (
+        <Option key="create-new" value="create-new" style={{ borderTop: '1px solid #f0f0f0' }}>
+          <Space>
+            <PlusOutlined />
+            <Text>创建新项目</Text>
+          </Space>
+        </Option>
+      )}
     </Select>
   );
 };

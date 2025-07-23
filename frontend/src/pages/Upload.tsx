@@ -131,7 +131,7 @@ const BatchTaskModal: React.FC<BatchTaskModalProps> = ({
       onOk={handleSubmit}
       confirmLoading={isCreating}
       width={800}
-      destroyOnClose
+      destroyOnHidden
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <div>

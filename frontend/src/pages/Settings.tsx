@@ -146,7 +146,7 @@ const APIConfigModal: React.FC<APIConfigModalProps> = ({
       onOk={handleSubmit}
       confirmLoading={createMutation.isLoading || updateMutation.isLoading}
       width={700}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

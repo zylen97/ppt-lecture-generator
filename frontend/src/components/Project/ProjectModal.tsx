@@ -5,24 +5,20 @@ import {
   Input, 
   Select, 
   Switch, 
-  Upload, 
   Button, 
   Space,
   Divider,
   Spin,
-  Alert,
   Card,
   Tag
 } from 'antd';
 import { 
-  UploadOutlined, 
   BookOutlined, 
   UserOutlined,
-  CalendarOutlined,
   TeamOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
-import { Project, ProjectTemplate, ProjectCreate, ProjectUpdate } from '@/types';
+import { Project, ProjectTemplate, ProjectCreate } from '@/types';
 import { ProjectService } from '@/services';
 
 const { Option } = Select;
@@ -81,11 +77,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     // 根据模板字段设置表单值
     template.fields.forEach(field => {
       if (template.example[field] && template.example[field] !== `{{${field}}}`) {
-        templateData[field as keyof ProjectCreate] = template.example[field];
+        (templateData as any)[field] = template.example[field];
       }
     });
 
-    form.setFieldsValue(templateData);
+    form.setFieldsValue(templateData as any);
   };
 
   // 处理模板选择
@@ -131,7 +127,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   };
 
   // 验证项目名称
-  const validateProjectName = async (rule: any, value: string) => {
+  const validateProjectName = async (_: any, value: string) => {
     if (!value) return Promise.resolve();
     
     const validation = ProjectService.validateProjectName(value);
@@ -141,7 +137,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   };
 
   // 验证课程代码
-  const validateCourseCode = async (rule: any, value: string) => {
+  const validateCourseCode = async (_: any, value: string) => {
     if (!value) return Promise.resolve();
     
     const validation = ProjectService.validateCourseCode(value);

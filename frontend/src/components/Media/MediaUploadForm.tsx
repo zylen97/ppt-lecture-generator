@@ -36,7 +36,7 @@ const MediaUploadForm: React.FC<MediaUploadFormProps> = ({
     getUploadStatus,
   } = useMediaUpload(supportedFormats);
 
-  const { hasFiles, canUpload, isDragging, progress } = getUploadStatus();
+  const { canUpload, isDragging, progress } = getUploadStatus();
 
   // 处理上传成功回调
   const handleUpload = async () => {

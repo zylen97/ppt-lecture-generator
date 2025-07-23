@@ -8,7 +8,6 @@ import {
   Space,
   Empty,
   Button,
-  Text,
 } from 'antd';
 import '@/styles/media-processor.css';
 import {
@@ -29,7 +28,7 @@ import {
   MediaStatistics,
 } from '@/components/Media';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 const AudioVideoProcessor: React.FC = () => {
   const { currentProject } = useCurrentProject();

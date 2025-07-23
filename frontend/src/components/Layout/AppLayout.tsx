@@ -9,12 +9,10 @@ import {
   Space,
   Button,
   theme,
-  Text,
   Divider,
 } from 'antd';
 import {
   DashboardOutlined,
-  UploadOutlined,
   UnorderedListOutlined,
   FileTextOutlined,
   SettingOutlined,
@@ -29,7 +27,7 @@ import { useCurrentProject } from '@/contexts';
 import { ProjectSelector } from '@/components/Project';
 
 const { Header, Sider, Content } = Layout;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);

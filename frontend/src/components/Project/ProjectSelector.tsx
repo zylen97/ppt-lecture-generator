@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Select, Space, Typography, Button, Avatar, Spin, Empty } from 'antd';
 import { 
   FolderOutlined, 
-  PlusOutlined, 
-  SearchOutlined,
+  PlusOutlined,
   BookOutlined,
   UserOutlined,
   CalendarOutlined
@@ -12,7 +11,6 @@ import { useCurrentProject, useProjectList } from '@/contexts';
 import { ProjectSummary } from '@/types';
 
 const { Option } = Select;
-const { Text } = Typography;
 
 interface ProjectSelectorProps {
   placeholder?: string;

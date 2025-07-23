@@ -13,8 +13,6 @@ import {
   Tag,
   Button,
   Empty,
-  Alert,
-  Divider,
 } from 'antd';
 import {
   FileTextOutlined,
@@ -37,7 +35,7 @@ import { formatDateTime, formatFileSize } from '@/utils';
 const { Title, Text, Paragraph } = Typography;
 
 const Dashboard: React.FC = () => {
-  const { currentProject, currentProjectLoading } = useCurrentProject();
+  const { currentProject } = useCurrentProject();
 
   // 获取统计数据 - 基于当前项目
   const { data: taskStats } = useQuery(
@@ -141,18 +139,8 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      success: '#52c41a',
-      processing: '#1890ff',
-      info: '#722ed1',
-      default: '#8c8c8c',
-    };
-    return colors[status] || colors.default;
-  };
-
   const getStatusIcon = (status: string) => {
-    const icons = {
+    const icons: Record<string, React.ReactElement> = {
       success: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
       processing: <ClockCircleOutlined style={{ color: '#1890ff' }} />,
       info: <FileTextOutlined style={{ color: '#722ed1' }} />,
